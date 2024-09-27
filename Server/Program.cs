@@ -2,7 +2,8 @@ using Core.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.EntityFrameworkCore.Design;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,10 +15,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-           options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>(options => 
+options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), options => options.MigrationsAssembly("Server")));
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 

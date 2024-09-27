@@ -1,22 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Shared.Models;
+﻿using Core.Models;
+using Core.Specifications;
+
 namespace Core.Specifications
 {
     public class ProductsWithCategoriesSpecification : BaseSpecification<Product>
     {
+        // Retrieve all products with their categories
         public ProductsWithCategoriesSpecification()
         {
-            AddInclude(x => x.Category);
+            AddInclude(p => p.Category);
+            AddOrderBy(p => p.Name);
         }
 
-        public ProductsWithCategoriesSpecification(int id) : 
-            base(x => x.Id == id)
+        // Retrieve a specific product by ID with its category
+        public ProductsWithCategoriesSpecification(int id)
+            : base(p => p.Id == id)
         {
-            AddInclude(x => x.Category);
+            AddInclude(p => p.Category);
+        }
+
+        // Example with pagination
+        public ProductsWithCategoriesSpecification(int skip, int take)
+        {
+            AddInclude(p => p.Category);
+            ApplyPaging(skip, take);
         }
     }
 }
