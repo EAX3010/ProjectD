@@ -1,27 +1,34 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Core.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Core.Models;
+
 namespace Infrastructure.Data.Configurations
 {
     public class CategoryConfiguration : IEntityTypeConfiguration<Category>
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            // Configure the Name property
+            // Primary key configuration
+            builder.HasKey(c => c.Id);
+
+            // Index on Name with explicit name
+            builder.HasIndex(c => c.Name)
+                .HasDatabaseName("IX_Category_Name");
+
+            // Property configurations
             builder.Property(c => c.Name)
                 .IsRequired()
                 .HasMaxLength(100);
 
-            // Configure the relationship with Product
+            // Relationships configuration
             builder.HasMany(c => c.Products)
                 .WithOne(p => p.Category)
-                .HasForeignKey(p => p.CategoryId);
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Optionally, configure indexes
-            builder.HasIndex(c => c.Name);
-
-
-
+            // Configure RowVersion as a concurrency token
+            builder.Property(c => c.RowVersion)
+                .IsRowVersion(); // Simplified configuration
         }
     }
 }

@@ -1,9 +1,8 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Core.Models
+namespace Shared.DTOs
 {
-    public class Product
+    public class ProductDto
     {
         public int Id { get; set; }
 
@@ -23,7 +22,7 @@ namespace Core.Models
 
         [Required(ErrorMessage = "Stock quantity is required.")]
         [Range(0, int.MaxValue, ErrorMessage = "Stock quantity cannot be negative.")]
-        public int StockQuantity { get; set; } = 0;
+        public int StockQuantity { get; set; }
 
         [Required]
         public bool Featured { get; set; } = false;
@@ -31,12 +30,7 @@ namespace Core.Models
         [Required(ErrorMessage = "Category ID is required.")]
         public int CategoryId { get; set; }
 
-        // Navigation property
-        public Category? Category { get; set; }
-
-        public DateTime CreatedDate { get; set; }
-
-        public DateTime UpdatedDate { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
 
         public byte[]? RowVersion { get; set; }
     }

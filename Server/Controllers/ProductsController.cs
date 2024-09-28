@@ -1,67 +1,108 @@
-﻿using Core.Interfaces;
-using Core.Specifications;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Core.Models;
+using Shared.DTOs;
 
 namespace Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class ProductsController : ControllerBase
     {
-        private readonly IRepository<Product> _productRepository;
+        private readonly IProductService _productService;
 
-        public ProductsController(IRepository<Product> productRepository)
+        // Inject the IProductService
+        public ProductsController(IProductService productService)
         {
-            _productRepository = productRepository;
+            _productService = productService;
         }
 
+        /// <summary>
+        /// Get all products
+        /// </summary>
+        /// <returns>A list of all products</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        [ProducesResponseType(typeof(IEnumerable<ProductDto>), 200)]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
         {
-            var spec = new ProductsWithCategoriesSpecification();
-            var products = await _productRepository.ListAsync(spec);
+            var products = await _productService.GetProductsAsync();
             return Ok(products);
         }
 
+        /// <summary>
+        /// Get a specific product by id
+        /// </summary>
+        /// <param name="id">The id of the product to retrieve</param>
+        /// <returns>The requested product</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        [ProducesResponseType(typeof(ProductDto), 200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
-            var spec = new ProductsWithCategoriesSpecification(id);
-            var product = await _productRepository.FirstOrDefaultAsync(spec);
-
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null)
                 return NotFound();
-
             return Ok(product);
         }
 
+        /// <summary>
+        /// Create a new product
+        /// </summary>
+        /// <param name="productDto">The product to create</param>
+        /// <returns>The created product</returns>
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(Product product)
+        [ProducesResponseType(typeof(ProductDto), 201)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<ProductDto>> AddProduct([FromBody] ProductDto productDto)
         {
-            var createdProduct = await _productRepository.AddAsync(product);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var createdProduct = await _productService.AddProductAsync(productDto);
             return CreatedAtAction(nameof(GetProduct), new { id = createdProduct.Id }, createdProduct);
         }
 
+        /// <summary>
+        /// Update an existing product
+        /// </summary>
+        /// <param name="id">The id of the product to update</param>
+        /// <param name="productDto">The updated product data</param>
+        /// <returns>No content</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, Product product)
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(409)]
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto productDto)
         {
-            if (id != product.Id)
-                return BadRequest();
+            if (id != productDto.Id)
+                return BadRequest("ID mismatch");
 
-            await _productRepository.UpdateAsync(product);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _productService.UpdateProductAsync(productDto);
+            if (!result)
+            {
+                return Conflict("The product was modified by another user. Please reload and try again.");
+            }
             return NoContent();
         }
 
+        /// <summary>
+        /// Delete a specific product
+        /// </summary>
+        /// <param name="id">The id of the product to delete</param>
+        /// <returns>No content</returns>
         [HttpDelete("{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _productRepository.GetByIdAsync(id);
-
-            if (product == null)
+            var result = await _productService.DeleteProductAsync(id);
+            if (!result)
                 return NotFound();
-
-            await _productRepository.DeleteAsync(product);
             return NoContent();
         }
     }
