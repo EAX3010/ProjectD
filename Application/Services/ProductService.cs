@@ -6,7 +6,10 @@ using AutoMapper.QueryableExtensions;
 using Core.Models;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Options;
 using Shared.DTOs;
+using Shared.Response;
 
 namespace Application.Services
 {
@@ -39,17 +42,20 @@ namespace Application.Services
         }
 
         // Add a new product
-        public async Task<ProductDto> AddProductAsync(ProductDto productDto)
+        public async Task<ServicesResponse<ProductDto>> AddProductAsync(ProductDto productDto)
         {
+            if(productDto == null)
+            {
+                return new ServicesResponse<ProductDto>(false, "Product is null", null); 
+            }
             var product = _mapper.Map<Product>(productDto);
-
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
             // Load related data
             await _context.Entry(product).Reference(p => p.Category).LoadAsync();
 
-            return _mapper.Map<ProductDto>(product);
+            return new ServicesResponse<ProductDto>(true, "Return product", _mapper.Map<ProductDto>(product));
         }
 
         // Update an existing product

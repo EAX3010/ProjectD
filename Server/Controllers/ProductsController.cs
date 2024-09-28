@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
+using Shared.Response;
 
 namespace Server.Controllers
 {
@@ -60,8 +61,11 @@ namespace Server.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var createdProduct = await _productService.AddProductAsync(productDto);
-            return CreatedAtAction(nameof(GetProduct), new { id = createdProduct.Id }, createdProduct);
+            ServicesResponse<ProductDto> result = await _productService.AddProductAsync(productDto);
+            if (result.Flag)
+                return CreatedAtAction(nameof(GetProduct), new { id = result.Instance.Id }, result.Instance);
+
+            return BadRequest(result.Message);
         }
 
         /// <summary>
