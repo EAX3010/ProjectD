@@ -6,6 +6,7 @@ using Infrastructure.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Logging;
 using Shared.DTOs;
 using Shared.Response;
 using static Shared.Response.Enums;
@@ -14,13 +15,16 @@ namespace Application.Services
 {
     public class ProductService : IProductService
     {
+       
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<ProductService> _logger;
 
-        public ProductService(ApplicationDbContext context, IMapper mapper)
+        public ProductService(ApplicationDbContext context, IMapper mapper, ILogger<ProductService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // Get all products
@@ -43,14 +47,10 @@ namespace Application.Services
         // Add a new product
         public async Task<ServicesResponse<ProductDto>> AddProductAsync(ProductDto productDto)
         {
-            // 1. Null Check
             if (productDto == null)
-            {
                 return new ServicesResponse<ProductDto>(ResponseType.Error, "Product is null", null);
-            }
 
-            // 2. Mapping DTO to Entity
-            var product = _mapper.Map<Product>(productDto);
+            Product product = _mapper.Map<Product>(productDto);
 
             try
             {
@@ -64,36 +64,19 @@ namespace Application.Services
                 // Map Entity back to DTO
                 var productDtoResult = _mapper.Map<ProductDto>(product);
 
+                _logger.LogTrace("Product added successfully.");    
                 return new ServicesResponse<ProductDto>(ResponseType.Success, "Product added successfully.", productDtoResult);
             }
-            catch (DbUpdateException dbEx) when (IsUniqueConstraintViolation(dbEx))
+            catch (DbUpdateException dbEx)
             {
-                // Handle unique constraint violation
-                return new ServicesResponse<ProductDto>(ResponseType.Error, "A product with the same name already exists.", null);
+                _logger.LogError(dbEx, dbEx.InnerException?.Message);
+                return new ServicesResponse<ProductDto>(ResponseType.Error, "An error occurred while adding the product.", null);
             }
             catch (Exception ex)
             {
-                // Log the exception
-                //_logger.LogError(ex, "Error adding product.");
-
+                _logger.LogError(ex, ex.InnerException?.Message);
                 return new ServicesResponse<ProductDto>(ResponseType.Error, "An error occurred while adding the product.", null);
             }
-        }
-
-        /// <summary>
-        /// Determines if the exception is due to a unique constraint violation.
-        /// This method needs to be implemented based on your database provider.
-        /// </summary>
-        private bool IsUniqueConstraintViolation(DbUpdateException exception)
-        {
-            // Example for SQL Server:
-            if (exception.InnerException is SqlException sqlEx)
-            {
-                // Error number for unique constraint violation in SQL Server is 2627 or 2601
-                return sqlEx.Number == 2627 || sqlEx.Number == 2601;
-            }
-
-            return false;
         }
 
 

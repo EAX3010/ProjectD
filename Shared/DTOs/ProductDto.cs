@@ -1,9 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Shared.DTOs
 {
     public class ProductDto
     {
+        [JsonIgnore]
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Product name is required.")]
@@ -24,14 +29,16 @@ namespace Shared.DTOs
         [Range(0, int.MaxValue, ErrorMessage = "Stock quantity cannot be negative.")]
         public int StockQuantity { get; set; }
 
-        [Required]
+        [JsonIgnore]
         public bool Featured { get; set; } = false;
 
         [Required(ErrorMessage = "Category ID is required.")]
         public int CategoryId { get; set; }
 
+        [JsonIgnore]
         public string CategoryName { get; set; } = string.Empty;
 
+        [JsonIgnore]
         public byte[]? RowVersion { get; set; }
     }
 }
