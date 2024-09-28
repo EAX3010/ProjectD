@@ -62,7 +62,7 @@ namespace Server.Controllers
                 return BadRequest(ModelState);
 
             ServicesResponse<ProductDto> result = await _productService.AddProductAsync(productDto);
-            if (result.Flag)
+            if (result.Flag == Enums.ResponseType.Success)
                 return CreatedAtAction(nameof(GetProduct), new { id = result.Instance.Id }, result.Instance);
 
             return BadRequest(result.Message);
