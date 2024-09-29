@@ -17,5 +17,5 @@ namespace Shared.Response
             Info
         }
     }
-    public record ServicesResponse<T>(ResponseType Flag, string Message, T Instance);
+    public record ServicesResponse<T>(ResponseType Flag, string Message, T? Instance);
 }
