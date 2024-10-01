@@ -20,67 +20,62 @@ namespace Server.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<CategoryDto>), 200)]
-        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
+        [ProducesResponseType(typeof(ServerResponse<IEnumerable<CategoryDto>>), 200)]
+        public async Task<ActionResult<ServerResponse<IEnumerable<CategoryDto>>>> GetCategories()
         {
-            var categories = await _categoryService.GetCategoriesAsync();
-            return Ok(categories);
+            var result = await _categoryService.GetCategoriesAsync();
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(CategoryDto), 200)]
+        [ProducesResponseType(typeof(ServerResponse<CategoryDto>), 200)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<CategoryDto>> GetCategory(int id)
+        public async Task<ActionResult<ServerResponse<CategoryDto>>> GetCategory(int id)
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
-            if (category == null)
-                return NotFound();
-            return Ok(category);
+            var result = await _categoryService.GetCategoryByIdAsync(id);
+            if (result.Flag == Enums.ResponseType.Error)
+                return NotFound(result);
+            return Ok(result);
         }
+
         [HttpPost]
-        [ProducesResponseType(typeof(CategoryDto), 201)]
+        [ProducesResponseType(typeof(ServerResponse<CategoryDto>), 201)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<CategoryDto>> AddCategory([FromBody] CategoryDto categoryDto)
+        public async Task<ActionResult<ServerResponse<CategoryDto>>> AddCategory([FromBody] CategoryDto categoryDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            var createdCategory = await _categoryService.AddCategoryAsync(categoryDto);
-            return CreatedAtAction(nameof(GetCategory), new { id = createdCategory.Id }, createdCategory);
+            var result = await _categoryService.AddCategoryAsync(categoryDto);
+            if (result.Flag == Enums.ResponseType.Success)
+                return CreatedAtAction(nameof(GetCategory), new { id = result.Instance.Id }, result);
+            return BadRequest(result);
         }
+
         [HttpPut("{id}")]
-        [ProducesResponseType(204)]
+        [ProducesResponseType(typeof(ServerResponse<bool>), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(409)]
-        public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto categoryDto)
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<ServerResponse<bool>>> UpdateCategory(int id, [FromBody] CategoryDto categoryDto)
         {
             if (id != categoryDto.Id)
-                return BadRequest("ID mismatch");
-
+                return BadRequest(new ServerResponse<bool>(Enums.ResponseType.Error, "ID mismatch", false));
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
             var result = await _categoryService.UpdateCategoryAsync(categoryDto);
-            if (result.Flag == Enums.ResponseType.Warning)
-            {
-                return Conflict(result.Message);
-            }
-            else if (result.Flag == Enums.ResponseType.Error)
-            {
-                return NotFound(result.Message);
-            }
-            return NoContent();
+            if (result.Flag == Enums.ResponseType.Error)
+                return NotFound(result);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
-        [ProducesResponseType(204)]
+        [ProducesResponseType(typeof(ServerResponse<bool>), 200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteCategory(int id)
+        public async Task<ActionResult<ServerResponse<bool>>> DeleteCategory(int id)
         {
             var result = await _categoryService.DeleteCategoryAsync(id);
             if (result.Flag == Enums.ResponseType.Error)
-                return NotFound();
-            return NoContent();
+                return NotFound(result);
+            return Ok(result);
         }
     }
 }

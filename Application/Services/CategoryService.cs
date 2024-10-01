@@ -27,7 +27,7 @@ namespace Application.Services
             _logger = logger;
         }
 
-        public async Task<ServicesResponse<List<CategoryDto>>> GetCategoriesAsync()
+        public async Task<ServerResponse<IEnumerable<CategoryDto>>> GetCategoriesAsync()
         {
             try
             {
@@ -36,37 +36,37 @@ namespace Application.Services
                     .ToListAsync();
 
                 _logger.LogTrace("Categories found.");
-                return new ServicesResponse<List<CategoryDto>>(ResponseType.Success, "Categories found.", categories);
+                return new ServerResponse<IEnumerable<CategoryDto>>(ResponseType.Success, "Categories found.", categories);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.InnerException?.Message);
-                return new ServicesResponse<List<CategoryDto>>(ResponseType.Error, "An error occurred while retrieving categories.", null);
+                return new ServerResponse<IEnumerable<CategoryDto>>(ResponseType.Error, "An error occurred while retrieving categories.", null);
             }
         }
 
-        public async Task<ServicesResponse<CategoryDto>> GetCategoryByIdAsync(int id)
+        public async Task<ServerResponse<CategoryDto>> GetCategoryByIdAsync(int id)
         {
             try
             {
                 var category = await _context.Categories.FindAsync(id);
                 if (category == null)
-                    return new ServicesResponse<CategoryDto>(ResponseType.Error, "Category not found.", null);
+                    return new ServerResponse<CategoryDto>(ResponseType.Error, "Category not found.", null);
 
                 _logger.LogTrace("Category found.");
-                return new ServicesResponse<CategoryDto>(ResponseType.Success, "Category found.", _mapper.Map<CategoryDto>(category));
+                return new ServerResponse<CategoryDto>(ResponseType.Success, "Category found.", _mapper.Map<CategoryDto>(category));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.InnerException?.Message);
-                return new ServicesResponse<CategoryDto>(ResponseType.Error, "An error occurred while retrieving the category.", null);
+                return new ServerResponse<CategoryDto>(ResponseType.Error, "An error occurred while retrieving the category.", null);
             }
         }
 
-        public async Task<ServicesResponse<CategoryDto>> AddCategoryAsync(CategoryDto categoryDto)
+        public async Task<ServerResponse<CategoryDto>> AddCategoryAsync(CategoryDto categoryDto)
         {
             if (categoryDto == null)
-                return new ServicesResponse<CategoryDto>(ResponseType.Error, "Category is null", null);
+                return new ServerResponse<CategoryDto>(ResponseType.Error, "Category is null", null);
 
             var category = _mapper.Map<Category>(categoryDto);
             try
@@ -75,21 +75,21 @@ namespace Application.Services
                 await _context.SaveChangesAsync();
                 var categoryDtoResult = _mapper.Map<CategoryDto>(category);
                 _logger.LogTrace("Category Added.");
-                return new ServicesResponse<CategoryDto>(ResponseType.Success, "Category Added.", categoryDtoResult);
+                return new ServerResponse<CategoryDto>(ResponseType.Success, "Category Added.", categoryDtoResult);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.InnerException?.Message);
-                return new ServicesResponse<CategoryDto>(ResponseType.Error, "An error occurred while adding the category.", null);
+                return new ServerResponse<CategoryDto>(ResponseType.Error, "An error occurred while adding the category.", null);
             }
         }
 
-        public async Task<ServicesResponse<bool>> UpdateCategoryAsync(CategoryDto categoryDto)
+        public async Task<ServerResponse<bool>> UpdateCategoryAsync(CategoryDto categoryDto)
         {
             var category = await _context.Categories.FindAsync(categoryDto.Id);
             if (category == null)
             {
-                return new ServicesResponse<bool>(ResponseType.Error, "Category not found", false);
+                return new ServerResponse<bool>(ResponseType.Error, "Category not found", false);
             }
 
             try
@@ -99,37 +99,37 @@ namespace Application.Services
                 _context.Entry(category).OriginalValues["RowVersion"] = originalRowVersion;
                 await _context.SaveChangesAsync();
                 _logger.LogTrace("Category Updated.");
-                return new ServicesResponse<bool>(ResponseType.Success, "Category Updated.", true);
+                return new ServerResponse<bool>(ResponseType.Success, "Category Updated.", true);
             }
             catch (DbUpdateConcurrencyException)
             {
                 _logger.LogWarning("Concurrency conflict while updating category.");
-                return new ServicesResponse<bool>(ResponseType.Warning, "A concurrency conflict occurred while updating the category.", false);
+                return new ServerResponse<bool>(ResponseType.Warning, "A concurrency conflict occurred while updating the category.", false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.InnerException?.Message);
-                return new ServicesResponse<bool>(ResponseType.Error, "An error occurred while updating the category.", false);
+                return new ServerResponse<bool>(ResponseType.Error, "An error occurred while updating the category.", false);
             }
         }
 
-        public async Task<ServicesResponse<bool>> DeleteCategoryAsync(int id)
+        public async Task<ServerResponse<bool>> DeleteCategoryAsync(int id)
         {
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
-                return new ServicesResponse<bool>(ResponseType.Error, "Category not found", false);
+                return new ServerResponse<bool>(ResponseType.Error, "Category not found", false);
 
             try
             {
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
                 _logger.LogTrace("Category Deleted.");
-                return new ServicesResponse<bool>(ResponseType.Success, "Category Deleted.", true);
+                return new ServerResponse<bool>(ResponseType.Success, "Category Deleted.", true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.InnerException?.Message);
-                return new ServicesResponse<bool>(ResponseType.Error, "An error occurred while deleting the category.", false);
+                return new ServerResponse<bool>(ResponseType.Error, "An error occurred while deleting the category.", false);
             }
         }
     }

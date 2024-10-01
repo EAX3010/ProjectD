@@ -8,7 +8,6 @@ namespace Shared.DTOs
 {
     public class ProductDto
     {
-        [JsonIgnore]
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Product name is required.")]
@@ -27,18 +26,17 @@ namespace Shared.DTOs
 
         [Required(ErrorMessage = "Stock quantity is required.")]
         [Range(0, int.MaxValue, ErrorMessage = "Stock quantity cannot be negative.")]
-        public int StockQuantity { get; set; }
+        public int? StockQuantity { get; set; }
 
-        [JsonIgnore]
+        [Required(ErrorMessage = "Featured is required")]
         public bool Featured { get; set; } = false;
 
-        [Required(ErrorMessage = "Category ID is required.")]
-        public int CategoryId { get; set; }
+        [Required(ErrorMessage = "CategoryId is required.")]
+        public int? CategoryId { get; set; }
 
-        [JsonIgnore]
+        // Navigation property`
         public string CategoryName { get; set; } = string.Empty;
 
-        [JsonIgnore]
         public byte[]? RowVersion { get; set; }
     }
 }

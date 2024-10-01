@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using Shared.Response;
+using static Shared.Response.Enums;
 
 namespace Server.Controllers
 {
@@ -14,80 +15,89 @@ namespace Server.Controllers
     {
         private readonly IProductService _productService;
 
-        
         public ProductsController(IProductService productService)
         {
             _productService = productService;
         }
 
-
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ProductDto>), 200)]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
+        [ProducesResponseType(typeof(ServerResponse<IEnumerable<ProductDto>>), 200)]
+        public async Task<ActionResult<ServerResponse<IEnumerable<ProductDto>>>> GetProducts()
         {
             var result = await _productService.GetProductsAsync();
-            if (result.Flag == Enums.ResponseType.Error)
-                return NotFound(result.Message);
-
-            return Ok(result.Instance);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ProductDto), 200)]
+        [ProducesResponseType(typeof(ServerResponse<ProductDto>), 200)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<ProductDto>> GetProduct(int id)
+        public async Task<ActionResult<ServerResponse<ProductDto>>> GetProduct(int id)
         {
             var result = await _productService.GetProductByIdAsync(id);
             if (result.Flag == Enums.ResponseType.Error)
-                return NotFound();
+                return NotFound(result);
 
-            return Ok(result.Instance);
+            return Ok(result);
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(ProductDto), 201)]
-        [ProducesResponseType(400)]
-        public async Task<ActionResult<ProductDto>> AddProduct([FromBody] ProductDto productDto)
+        [ProducesResponseType(typeof(ServerResponse<ProductDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ServerResponse<ProductDto>>> AddProduct([FromBody] ProductDto productDto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            {
+                return BadRequest(new ServerResponse<ProductDto>(ResponseType.Error, "Invalid model state"));
+            }
 
-            ServicesResponse<ProductDto> result = await _productService.AddProductAsync(productDto);
-            if (result.Flag == Enums.ResponseType.Success)
-                return CreatedAtAction(nameof(GetProduct), new { Id = result.Instance.Id }, result.Instance);
+            try
+            {
+                var result = await _productService.AddProductAsync(productDto);
 
-            return BadRequest(result.Message);
+                if (result.Flag == ResponseType.Success)
+                {
+                    return CreatedAtAction(nameof(GetProduct), new { id = result.Instance.Id }, result);
+                }
+
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ServerResponse<ProductDto>(ResponseType.Error, "An unexpected error occurred. Please try again later."));
+            }
         }
 
         [HttpPut("{id}")]
-        [ProducesResponseType(204)]
+        [ProducesResponseType(typeof(ServerResponse<ProductDto>), 200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(409)]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto productDto)
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<ServerResponse<ProductDto>>> UpdateProduct(int id, [FromBody] ProductDto productDto)
         {
             if (id != productDto.Id)
-                return BadRequest("ID mismatch");
+                return BadRequest(new ServerResponse<ProductDto>(Enums.ResponseType.Error, "ID mismatch", null));
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var result = await _productService.UpdateProductAsync(productDto);
             if (result.Flag == Enums.ResponseType.Error)
-            {
-                return BadRequest(result.Message);
-            }
-            return NoContent();
+                return NotFound(result);
+
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
-        [ProducesResponseType(204)]
+        [ProducesResponseType(typeof(ServerResponse<bool>), 200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> DeleteProduct(int id)
+        public async Task<ActionResult<ServerResponse<bool>>> DeleteProduct(int id)
         {
             var result = await _productService.DeleteProductAsync(id);
             if (result.Flag == Enums.ResponseType.Error)
-                return NotFound();
-            return NoContent();
+                return NotFound(result);
+
+            return Ok(result);
         }
     }
 }

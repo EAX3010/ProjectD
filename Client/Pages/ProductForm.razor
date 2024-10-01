@@ -1,0 +1,131 @@
+﻿@page "/product/add"
+@page "/product/edit/{Id:int}"
+@using Application.Interfaces
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+
+<h3>@(Id == null ? "Add" : "Edit") Product</h3>
+
+<EditForm Model="@product" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    @if (categories != null)
+    {
+        <div class="form-group">
+            <label for="name">Name</label>
+            <InputText id="name" @bind-Value="product.Name" class="form-control" />
+            <ValidationMessage For="@(() => product.Name)" />
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price</label>
+            <InputNumber id="price" @bind-Value="product.Price" class="form-control" />
+            <ValidationMessage For="@(() => product.Price)" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <InputTextArea id="description" @bind-Value="product.Description" class="form-control" />
+            <ValidationMessage For="@(() => product.Description)" />
+        </div>
+
+        <div class="form-group">
+            <label for="image">Image URL</label>
+            <InputText id="image" @bind-Value="product.Image" class="form-control" />
+            <ValidationMessage For="@(() => product.Image)" />
+        </div>
+
+        <div class="form-group">
+            <label for="stockQuantity">Stock Quantity</label>
+            <InputNumber id="stockQuantity" @bind-Value="product.StockQuantity" class="form-control" />
+            <ValidationMessage For="@(() => product.StockQuantity)" />
+        </div>
+
+
+        <div class="form-group">
+            <label for="featured">Featured</label>
+            <InputCheckbox id="featured" @bind-Value="product.Featured" />
+            <ValidationMessage For="@(() => product.Featured)" />
+        </div>
+
+
+        <div class="form-group">
+            <label for="categoryId">Category</label>
+            <InputSelect id="categoryId" @bind-Value="product.CategoryId" class="form-control">
+                <option value="">Select a category</option>
+                @foreach (var category in categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => product.CategoryId)" />
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code 
+{
+    [Parameter]
+    public int? Id { get; set; }
+
+    private ProductDto product = new ProductDto();
+    private List<CategoryDto> categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var categoriesResponse = await CategoryService.GetCategoriesAsync();
+        if (categoriesResponse.Flag == Enums.ResponseType.Success)
+        {
+            categories = categoriesResponse.Instance.ToList();
+        }
+
+        if (Id.HasValue)
+        {
+            var productResponse = await ProductService.GetProductByIdAsync(Id.Value);
+            if (productResponse.Flag == Enums.ResponseType.Success)
+            {
+                product = productResponse.Instance;
+            }
+        }
+        else
+        {
+            // Initialize default values for a new product
+            product.Featured = false;
+            product.StockQuantity = 0;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        ServerResponse<ProductDto> response;
+
+        if (Id.HasValue)
+        {
+            response = await ProductService.UpdateProductAsync(product);
+        }
+        else
+        {
+            response = await ProductService.AddProductAsync(product);
+        }
+
+        if (response.Flag == Enums.ResponseType.Success)
+        {
+            NavigationManager.NavigateTo("/products");
+        }
+        else
+        {
+            // Handle error
+            Console.WriteLine($"Error: {response.Message}");
+            // You might want to display this error to the user
+        }
+    }
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+}

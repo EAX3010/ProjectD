@@ -1,9 +1,9 @@
 ﻿@page "/products"
+@using Application.Interfaces
 @inject HttpClient Http
-@using Shared.DTOs
-@using System.Net.Http.Json
-
-<h1>Products</h1>
+@inject NavigationManager NavigationManager
+@inject IProductService productsService
+<h3>Products</h3>
 
 @if (products == null)
 {
@@ -11,34 +11,80 @@
 }
 else
 {
-    <table class="table">
+    <table class="table table-striped">
         <thead>
             <tr>
+                <th>ID</th>
                 <th>Name</th>
-                <th>Category</th>
                 <th>Price</th>
-                <!-- Other columns -->
+                <th>Category</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var product in products)
             {
                 <tr>
+                    <td>@product.Id</td>
                     <td>@product.Name</td>
-                    <td>@product.CategoryName</td>
                     <td>@product.Price.ToString("C")</td>
-                    <!-- Other columns -->
+                    <td> <img src="@product.Image" /></td>
+                    <td>@product.CategoryName</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditProduct(product.Id)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.Id)">Delete</button>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 }
 
+<button class="btn btn-success" @onclick="AddProduct">Add Product</button>
+
 @code {
-    private List<ProductDto>? products;
+    private List<ProductDto> products;
 
     protected override async Task OnInitializedAsync()
     {
-        products = await Http.GetFromJsonAsync<List<ProductDto>>("api/products");
+        var respond = await productsService.GetProductsAsync();
+        if (respond.Flag == Enums.ResponseType.Success)
+        {
+            products = respond.Instance.ToList();
+        }
+        else
+        {
+            products = new List<ProductDto>();
+        }
+        Console.WriteLine(respond.Message);
+
+    }
+
+    private void AddProduct()
+    {
+        NavigationManager.NavigateTo("/product/add");
+    }
+
+    private void EditProduct(int id)
+    {
+        NavigationManager.NavigateTo($"/product/edit/{id}");
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        if (await ConfirmDeleteAsync())
+        {
+            var respond = await productsService.DeleteProductAsync(id);
+            if (respond.Flag == Enums.ResponseType.Success)
+                products.RemoveAll(p => p.Id == id);
+
+            Console.WriteLine(respond.Message);
+        }
+    }
+
+    private async Task<bool> ConfirmDeleteAsync()
+    {
+        return await Task.FromResult(true);
     }
 }
+
