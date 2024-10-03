@@ -10,7 +10,8 @@ namespace Shared.DTOs
         [StringLength(100, ErrorMessage = "Category name can't exceed 100 characters.")]
         public string Name { get; set; } = string.Empty;
 
-        // RowVersion for concurrency control
+        //navigation
+        public required ICollection<ProductDto>? Products { get; set; }
         public byte[]? RowVersion { get; set; }
     }
 }

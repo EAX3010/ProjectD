@@ -47,18 +47,18 @@ namespace Application.Services
             }
         }
 
-        public async Task<ServerResponse<ProductDto>> GetProductByIdAsync(int id)
+        public async Task<ServerResponse<ProductDto>> GetProductByIdAsync(int? id)
         {
-            if (id <= 0)
+            if (!id.HasValue)
             {
                 return new ServerResponse<ProductDto>(ResponseType.Error, "Invalid product ID.", null);
             }
 
             try
             {
-                var product = await _context.Products
-                    .AsNoTracking()
+                var product = await _context.Products.Include(p => p.Category)
                     .FirstOrDefaultAsync(p => p.Id == id);
+
 
                 if (product == null)
                     return new ServerResponse<ProductDto>(ResponseType.Error, "Product not found.", null);
@@ -80,7 +80,7 @@ namespace Application.Services
                 return new ServerResponse<ProductDto>(ResponseType.Error, "Product data is null.", null);
             }
 
-            if (productDto.Id != 0)
+            if (productDto.Id.HasValue)
             {
                 return new ServerResponse<ProductDto>(ResponseType.Error, "Product can't be added with a pre-defined ID.", null);
             }
@@ -201,9 +201,9 @@ namespace Application.Services
             }
         }
 
-        public async Task<ServerResponse<bool>> DeleteProductAsync(int id)
+        public async Task<ServerResponse<bool>> DeleteProductAsync(int? id)
         {
-            if (id <= 0)
+            if (!id.HasValue)
             {
                 return new ServerResponse<bool>(ResponseType.Error, "Invalid product ID.", false);
             }

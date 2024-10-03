@@ -6,67 +6,74 @@
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
 
-<h3>@(Id == null ? "Add" : "Edit") Product</h3>
+<div class="container mt-4">
+    <h1 class="mb-4">@(Id == null ? "Add" : "Edit") Product</h1>
 
-<EditForm Model="@product" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    @if (categories != null)
-    {
+    <EditForm Model="@product" OnValidSubmit="HandleValidSubmit" class="needs-validation" novalidate>
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger mb-4" />
+        @if (categories != null)
+        {
+            <div class="form-group">
+                <label for="Name">Name</label>
+                <InputText id="Name" @bind-Value="product.Name" class="form-control" />
+                <ValidationMessage For="@(() => product.Name)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label for="Price">Price</label>
+                <InputNumber id="Price" @bind-Value="product.Price" class="form-control" />
+                <ValidationMessage For="@(() => product.Price)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label for="Description">Description</label>
+                <InputTextArea id="Description" @bind-Value="product.Description" class="form-control" rows="3" />
+                <ValidationMessage For="@(() => product.Description)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label for="image">Image URL</label>
+                <InputText id="image" @bind-Value="product.Image" class="form-control" />
+                <ValidationMessage For="@(() => product.Image)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label for="stockQuantity">Stock Quantity</label>
+                <InputNumber id="stockQuantity" @bind-Value="product.StockQuantity" class="form-control" />
+                <ValidationMessage For="@(() => product.StockQuantity)" class="text-danger" />
+            </div>
+
+            <div class="form-group form-check">
+                <InputCheckbox id="featured" @bind-Value="product.Featured" class="form-check-input" />
+                <label class="form-check-label" for="featured">Featured</label>
+                <ValidationMessage For="@(() => product.Featured)" class="text-danger" />
+            </div>
+
+            <div class="form-group">
+                <label for="categoryId">Category</label>
+                <InputSelect @bind-Value="product.CategoryId" class="form-control">
+                    <option value="">-- Select Category --</option>
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => product.CategoryId)" class="text-danger" />
+            </div>
+        }
+
         <div class="form-group">
-            <label for="name">Name</label>
-            <InputText id="name" @bind-Value="product.Name" class="form-control" />
-            <ValidationMessage For="@(() => product.Name)" />
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Save
+            </button>
+            <button type="button" class="btn btn-secondary ml-2" @onclick="Cancel">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
         </div>
+    </EditForm>
+</div>
 
-        <div class="form-group">
-            <label for="price">Price</label>
-            <InputNumber id="price" @bind-Value="product.Price" class="form-control" />
-            <ValidationMessage For="@(() => product.Price)" />
-        </div>
-
-        <div class="form-group">
-            <label for="description">Description</label>
-            <InputTextArea id="description" @bind-Value="product.Description" class="form-control" />
-            <ValidationMessage For="@(() => product.Description)" />
-        </div>
-
-        <div class="form-group">
-            <label for="image">Image URL</label>
-            <InputText id="image" @bind-Value="product.Image" class="form-control" />
-            <ValidationMessage For="@(() => product.Image)" />
-        </div>
-
-        <div class="form-group">
-            <label for="stockQuantity">Stock Quantity</label>
-            <InputNumber id="stockQuantity" @bind-Value="product.StockQuantity" class="form-control" />
-            <ValidationMessage For="@(() => product.StockQuantity)" />
-        </div>
-
-
-        <div class="form-group">
-            <label for="featured">Featured</label>
-            <InputCheckbox id="featured" @bind-Value="product.Featured" />
-            <ValidationMessage For="@(() => product.Featured)" />
-        </div>
-
-
-        <div class="form-group">
-            <label for="categoryId">Category</label>
-            <InputSelect id="categoryId" @bind-Value="product.CategoryId" class="form-control">
-                <option value="">Select a category</option>
-                @foreach (var category in categories)
-                {
-                    <option value="@category.Id">@category.Name</option>
-                }
-            </InputSelect>
-            <ValidationMessage For="@(() => product.CategoryId)" />
-        </div>
-    }
-
-    <button type="submit" class="btn btn-primary">Save</button>
-    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
-</EditForm>
 
 @code 
 {
@@ -91,12 +98,6 @@
             {
                 product = productResponse.Instance;
             }
-        }
-        else
-        {
-            // Initialize default values for a new product
-            product.Featured = false;
-            product.StockQuantity = 0;
         }
     }
 

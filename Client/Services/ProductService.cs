@@ -25,13 +25,16 @@ namespace Client.Services
             return new ServerResponse<IEnumerable<ProductDto>>(Enums.ResponseType.Error, "Error fetching products");
         }
 
-        public async Task<ServerResponse<ProductDto>> GetProductByIdAsync(int id)
+        public async Task<ServerResponse<ProductDto>> GetProductByIdAsync(int? id)
         {
-            var response = await _httpClient.GetAsync($"{_baseUrl}/{id}");
-            if (response.IsSuccessStatusCode)
+            if (id.HasValue)
             {
-                var result = await response.Content.ReadFromJsonAsync<ServerResponse<ProductDto>>();
-                return result ?? new ServerResponse<ProductDto>(Enums.ResponseType.Error, "Error deserializing response");
+                var response = await _httpClient.GetAsync($"{_baseUrl}/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ServerResponse<ProductDto>>();
+                    return result ?? new ServerResponse<ProductDto>(Enums.ResponseType.Error, "Error deserializing response");
+                }
             }
             return new ServerResponse<ProductDto>(Enums.ResponseType.Error, "Error fetching product");
         }
@@ -75,15 +78,19 @@ namespace Client.Services
             return new ServerResponse<ProductDto>(Enums.ResponseType.Error, "Failed to update product");
         }
 
-        public async Task<ServerResponse<bool>> DeleteProductAsync(int id)
+        public async Task<ServerResponse<bool>> DeleteProductAsync(int? id)
         {
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/{id}");
-            if (response.IsSuccessStatusCode)
+            if (id.HasValue)
             {
-                var result = await response.Content.ReadFromJsonAsync<ServerResponse<bool>>();
-                return result ?? new ServerResponse<bool>(Enums.ResponseType.Error, "Error deserializing response");
+                var response = await _httpClient.DeleteAsync($"{_baseUrl}/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ServerResponse<bool>>();
+                    return result ?? new ServerResponse<bool>(Enums.ResponseType.Error, "Error deserializing response");
+                }
             }
             return new ServerResponse<bool>(Enums.ResponseType.Error, "Failed to delete product");
         }
+     
     }
 }

@@ -13,13 +13,13 @@ namespace Infrastructure.Data.Configurations
 
             // Indexes with explicit names
             builder.HasIndex(p => p.Name)
-                .HasDatabaseName("IX_Product_Name");
+                .HasDatabaseName("Product_Name");
 
             builder.HasIndex(p => p.CategoryId)
-                .HasDatabaseName("IX_Product_CategoryId");
+                .HasDatabaseName("Product_CategoryId");
 
             builder.HasIndex(p => p.Featured)
-                .HasDatabaseName("IX_Product_Featured");
+                .HasDatabaseName("Product_Featured");
 
             // Relationships
             builder.HasOne(p => p.Category)
@@ -36,13 +36,13 @@ namespace Infrastructure.Data.Configurations
                 .HasColumnType("decimal(18,2)")
                 .IsRequired();
 
-            builder.Property(p => p.Description)
+            builder.Property(p => p.Description).IsRequired()
                 .HasMaxLength(500);
 
-            builder.Property(p => p.Image)
+            builder.Property(p => p.Image).IsRequired()
                 .HasMaxLength(250);
 
-            builder.Property(p => p.StockQuantity)
+            builder.Property(p => p.StockQuantity).HasMaxLength(9999)
                 .IsRequired();
 
             builder.Property(p => p.Featured)
